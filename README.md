@@ -1,9 +1,41 @@
 # BlockDialog
-阻塞式dialog管理
-##step1
-初始化
-  DialogBlockManager.getInstance()
-##step2
-使用方式
-注意showDialog()方法使用，如果队列为空，对话框将被调用 show();如果监听dialog关闭事件，请在此方法之前调用 {@link Dialogset#OnDismissListener(DialogInterface.OnDismissListener)}。 
- ![image](https://user-images.githubusercontent.com/9332309/165727518-277b4e77-068a-48a1-a21c-5aafe7f19af2.png)
+
+## 目录
+
+dialog阻塞管理
+
+ReentrantLock实现阻塞队列
+
+生命周期处理，无需关系内存泄漏
+
+动态代理，兼容android所有版本，避免创建Dialog代码侵入
+
+### step1 初始化&#x20;
+
+```java
+DialogBlockManager.getInstance().init(Application);
+```
+
+### step2 调用
+
+```java
+    void init(Application application);
+
+    /**
+     * add dialog to block queue. if queue is empty, dialog will be call show();
+     * if you want to set a listener to be invoked when the dialog is dismissed,
+     * call {@link Dialog#setOnDismissListener(DialogInterface.OnDismissListener)} before the method.
+     * @param dialog Dialog
+     */
+    void showDialog(Dialog dialog);
+
+    void dismissDialog();
+
+    void cancelDialog();
+
+    void removeQueue();
+
+    void removeQueue(Dialog dialog);
+```
+
+> 如果需要监听dialog关闭事件，请在showDialog()方法之前调用dialog.OnDismissListener(DialogInterface.OnDismissListener)&#x20;
