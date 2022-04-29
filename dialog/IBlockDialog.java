@@ -1,4 +1,4 @@
-package cn.com.bookan.popupdemo.dialog;
+package com.magook.dialog;
 
 import android.app.Application;
 import android.app.Dialog;

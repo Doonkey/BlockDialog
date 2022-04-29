@@ -1,9 +1,10 @@
-package cn.com.bookan.popupdemo.dialog;
+package com.magook.dialog;
 
 import android.app.Activity;
 import android.app.Application;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,8 +12,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -57,11 +56,16 @@ public class DialogBlockManager implements IBlockDialog, Runnable {
                     if (waitList.isEmpty()) break;
                     isDialogShow = true;
                     mDialog = new WeakReference<>(waitList.remove(0));
-                    //dialog show and listener status, if dismiss, call signalAll()
-                    //In order to ensure functional isolation, use dynamic proxy dismiss monitoring, and call signalAll()
                     try {
-                        proxy(mDialog.get());
-                        mDialog.get().show();
+                        Dialog dialog = mDialog.get();
+                        if (isActivityFinish(dialog.getContext())) {
+                            resetDialog();
+                            break;
+                        }
+                        //dialog show and listener status, if dismiss, call signalAll()
+                        //In order to ensure functional isolation, use dynamic proxy dismiss monitoring, and call signalAll()
+                        proxy(dialog);
+                        dialog.show();
                     } catch (NoSuchFieldException | IllegalAccessException e) {
                         e.printStackTrace();
                         resetDialog();
@@ -131,6 +135,11 @@ public class DialogBlockManager implements IBlockDialog, Runnable {
                 dialog.setOnDismissListener(proxyInstance);
             }
         }
+
+        private boolean isActivityFinish(Context context) {
+            Activity activity = scanForActivity(context);
+            return activity == null || activity.isDestroyed() || activity.isFinishing();
+        }
     });
 
     private DialogBlockManager() {
@@ -151,6 +160,18 @@ public class DialogBlockManager implements IBlockDialog, Runnable {
             e.printStackTrace();
         }finally {
             reentrantLock.unlock();
+        }
+    }
+
+    private Activity scanForActivity(Context context) {
+        if (context == null) {
+            return null;
+        } else if (context instanceof Activity) {
+            return (Activity) context;
+        } else if (context instanceof ContextWrapper) {
+            return scanForActivity(((ContextWrapper) context).getBaseContext());
+        } else {
+            return null;
         }
     }
 
@@ -217,39 +238,45 @@ public class DialogBlockManager implements IBlockDialog, Runnable {
     }
 
     private final Application.ActivityLifecycleCallbacks lifecycleCallbacks = new Application.ActivityLifecycleCallbacks() {
+
         @Override
-        public void onActivityCreated(@NonNull @NotNull Activity activity, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+        public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+        }
+
+        @Override
+        public void onActivityStarted(@NonNull Activity activity) {
 
         }
 
         @Override
-        public void onActivityStarted(@NonNull @NotNull Activity activity) {
+        public void onActivityResumed(@NonNull Activity activity) {
 
         }
 
         @Override
-        public void onActivityResumed(@NonNull @NotNull Activity activity) {
+        public void onActivityPaused(@NonNull Activity activity) {
 
         }
 
         @Override
-        public void onActivityPaused(@NonNull @NotNull Activity activity) {
+        public void onActivityStopped(@NonNull Activity activity) {
+        }
+
+        @Override
+        public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
 
         }
 
         @Override
-        public void onActivityStopped(@NonNull @NotNull Activity activity) {
-            removeQueue();
-        }
-
-        @Override
-        public void onActivitySaveInstanceState(@NonNull @NotNull Activity activity, @NonNull @NotNull Bundle outState) {
-
-        }
-
-        @Override
-        public void onActivityDestroyed(@NonNull @NotNull Activity activity) {
-
+        public void onActivityDestroyed(@NonNull Activity activity) {
+            for (Dialog dialog : waitList) {
+                if (dialog == null) continue;
+                Activity dialogContext = scanForActivity(dialog.getContext());
+                if (dialogContext == null ||
+                        activity.getClass().getCanonicalName().equals(dialogContext.getClass().getCanonicalName())) {
+                    removeQueue(dialog);
+                }
+            }
         }
     };
 }
