@@ -17,6 +17,10 @@ DialogBlockManager.getInstance().init(Application);
 ### step2 调用
 
 ```java
+DialogBlockManager.getInstance().xxx();
+```
+
+```java
     void init(Application application);
 
     /**
