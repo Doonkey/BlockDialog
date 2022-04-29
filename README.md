@@ -1,8 +1,6 @@
 # BlockDialog
 
-## 目录
-
-dialog阻塞管理
+## dialog阻塞管理
 
 ReentrantLock实现阻塞队列
 
@@ -10,7 +8,7 @@ ReentrantLock实现阻塞队列
 
 动态代理，兼容android所有版本，避免创建Dialog代码侵入
 
-### step1 初始化&#x20;
+### step1 初始化;
 
 ```java
 DialogBlockManager.getInstance().init(Application);
