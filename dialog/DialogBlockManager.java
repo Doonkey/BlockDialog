@@ -1,11 +1,18 @@
 package cn.com.bookan.popupdemo.dialog;
 
+import android.app.Activity;
+import android.app.Application;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -32,6 +39,8 @@ public class DialogBlockManager implements IBlockDialog, Runnable {
 
     private final ReentrantLock reentrantLock = new ReentrantLock(true);
     private final Condition condition;
+
+    private boolean isInit;
 
     private boolean isRunning = true;
     private boolean isDialogShow = false;
@@ -146,6 +155,13 @@ public class DialogBlockManager implements IBlockDialog, Runnable {
     }
 
     @Override
+    public void init(Application application){
+        if (isInit) return;
+        isInit = true;
+        application.registerActivityLifecycleCallbacks(lifecycleCallbacks);
+    }
+
+    @Override
     public void run() {
         reentrantLock.lock();
         try {
@@ -199,4 +215,41 @@ public class DialogBlockManager implements IBlockDialog, Runnable {
     private static class Holder {
         public static final DialogBlockManager DIALOG_BLOCK_MANAGER_HOLDER = new DialogBlockManager();
     }
+
+    private final Application.ActivityLifecycleCallbacks lifecycleCallbacks = new Application.ActivityLifecycleCallbacks() {
+        @Override
+        public void onActivityCreated(@NonNull @NotNull Activity activity, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+
+        }
+
+        @Override
+        public void onActivityStarted(@NonNull @NotNull Activity activity) {
+
+        }
+
+        @Override
+        public void onActivityResumed(@NonNull @NotNull Activity activity) {
+
+        }
+
+        @Override
+        public void onActivityPaused(@NonNull @NotNull Activity activity) {
+
+        }
+
+        @Override
+        public void onActivityStopped(@NonNull @NotNull Activity activity) {
+            removeQueue();
+        }
+
+        @Override
+        public void onActivitySaveInstanceState(@NonNull @NotNull Activity activity, @NonNull @NotNull Bundle outState) {
+
+        }
+
+        @Override
+        public void onActivityDestroyed(@NonNull @NotNull Activity activity) {
+
+        }
+    };
 }

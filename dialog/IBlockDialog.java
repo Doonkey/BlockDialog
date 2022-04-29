@@ -1,9 +1,12 @@
 package cn.com.bookan.popupdemo.dialog;
 
+import android.app.Application;
 import android.app.Dialog;
 import android.content.DialogInterface;
 
 public interface IBlockDialog {
+
+    void init(Application application);
 
     /**
      * add dialog to block queue. if queue is empty, dialog will be call show();
